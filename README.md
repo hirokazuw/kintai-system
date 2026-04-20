@@ -24,6 +24,7 @@ PHP + MySQL で構築したWebベースの勤怠管理システムです。
 
 ## ファイル構成
 
+```
 kintai/
 ├── config.sample.php     — DB接続設定サンプル（要リネーム）
 ├── get_staff.php         — スタッフ一覧API
@@ -31,6 +32,8 @@ kintai/
 ├── stamp.php             — 打刻API
 ├── index.html            — 打刻画面
 └── admin.html            — ログ確認・Excel出力画面
+
+```
 
 ## セットアップ
 
