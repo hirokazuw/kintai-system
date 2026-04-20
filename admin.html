@@ -219,6 +219,7 @@ tr:hover td { background: #f7fafc; }
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-today">当日ログ</button>
     <button class="tab-btn"        id="tab-month">当月ログ</button>
+    <button class="tab-btn"        id="tab-staff">スタッフ管理</button>
   </div>
 
   <div id="month-selector" style="display:none">
@@ -235,6 +236,36 @@ tr:hover td { background: #f7fafc; }
         <thead id="log-thead"></thead>
         <tbody id="log-tbody"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- スタッフ管理パネル -->
+  <div id="staff-panel" style="display:none">
+    <div class="log-card" style="padding:24px">
+
+      <!-- 追加フォーム -->
+      <div style="display:flex;gap:10px;margin-bottom:24px">
+        <input type="text" id="new-staff-name" placeholder="氏名を入力" style="
+          flex:1;padding:10px 14px;font-size:1rem;
+          border:2px solid #e2e8f0;border-radius:8px;outline:none;
+        " />
+        <button id="add-staff-btn" style="
+          padding:10px 20px;background:#3182ce;color:#fff;
+          font-weight:bold;border:none;border-radius:8px;cursor:pointer;
+          font-size:0.95rem;white-space:nowrap;
+        ">追加</button>
+      </div>
+
+      <!-- スタッフ一覧 -->
+      <div id="staff-list-admin">
+        <p style="color:#a0aec0;text-align:center">読み込み中...</p>
+      </div>
+
+      <!-- メッセージ -->
+      <div id="staff-msg" style="
+        margin-top:16px;padding:12px 16px;border-radius:8px;
+        font-size:0.95rem;display:none;
+      "></div>
     </div>
   </div>
 
@@ -286,13 +317,24 @@ function initMonthInput() {
 // ============ タブ切り替え ============
 document.getElementById('tab-today').addEventListener('click', () => switchTab('today'));
 document.getElementById('tab-month').addEventListener('click', () => switchTab('month'));
+document.getElementById('tab-staff').addEventListener('click', () => switchTab('staff'));
 
 function switchTab(mode) {
   currentMode = mode;
   document.getElementById('tab-today').classList.toggle('active', mode === 'today');
   document.getElementById('tab-month').classList.toggle('active', mode === 'month');
-  document.getElementById('month-selector').style.display = mode === 'month' ? 'flex' : 'none';
-  loadLogs(mode);
+  document.getElementById('tab-staff').classList.toggle('active', mode === 'staff');
+  document.getElementById('month-selector').style.display  = mode === 'month' ? 'flex' : 'none';
+  document.getElementById('staff-panel').style.display     = mode === 'staff' ? 'block' : 'none';
+
+  const logCard = document.querySelector('.log-card');
+  if (logCard) logCard.style.display = mode === 'staff' ? 'none' : 'block';
+
+  if (mode === 'staff') {
+    loadStaffAdmin();
+  } else {
+    loadLogs(mode);
+  }
 }
 
 document.getElementById('reload-btn').addEventListener('click', () => loadLogs('month'));
@@ -459,6 +501,80 @@ function showTable() {
   document.getElementById('log-message').style.display    = 'none';
   document.getElementById('log-table-wrap').style.display = 'block';
 }
+
+// ============ スタッフ管理 ============
+async function loadStaffAdmin() {
+  document.getElementById('staff-list-admin').innerHTML =
+    '<p style="color:#a0aec0;text-align:center">読み込み中...</p>';
+  try {
+    const res  = await fetch('get_staff.php');
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    renderStaffAdmin(data.staff);
+  } catch (e) {
+    document.getElementById('staff-list-admin').innerHTML =
+      `<p style="color:#e53e3e">取得失敗: ${e.message}</p>`;
+  }
+}
+
+function renderStaffAdmin(staffList) {
+  const container = document.getElementById('staff-list-admin');
+  if (staffList.length === 0) {
+    container.innerHTML = '<p style="color:#a0aec0;text-align:center">スタッフが登録されていません</p>';
+    return;
+  }
+  container.innerHTML = '';
+  staffList.forEach(s => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f4f8;';
+    row.innerHTML = `
+      <span style="font-size:1rem;color:#2d3748">${s.name}</span>
+      <button data-id="${s.id}" data-name="${s.name}" class="del-btn" style="
+        padding:6px 14px;background:#fff;color:#e53e3e;
+        border:1px solid #e53e3e;border-radius:6px;cursor:pointer;font-size:0.85rem;
+      ">削除</button>
+    `;
+    container.appendChild(row);
+  });
+
+  document.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm(`「${btn.dataset.name}」を削除しますか？\n打刻ログも全て削除されます。`)) return;
+      await staffAction('delete', { id: btn.dataset.id });
+    });
+  });
+}
+
+async function staffAction(action, params) {
+  const msg = document.getElementById('staff-msg');
+  msg.style.display = 'none';
+  const fd = new FormData();
+  fd.append('action', action);
+  Object.entries(params).forEach(([k, v]) => fd.append(k, v));
+  try {
+    const res  = await fetch('staff_api.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    msg.style.cssText = `display:block;margin-top:16px;padding:12px 16px;border-radius:8px;font-size:0.95rem;background:${data.success ? '#c6f6d5' : '#fed7d7'};color:${data.success ? '#276749' : '#9b2c2c'};`;
+    msg.textContent = data.message;
+    if (data.success) {
+      if (action === 'add') document.getElementById('new-staff-name').value = '';
+      loadStaffAdmin();
+    }
+  } catch (e) {
+    msg.style.cssText = 'display:block;margin-top:16px;padding:12px 16px;border-radius:8px;font-size:0.95rem;background:#fed7d7;color:#9b2c2c;';
+    msg.textContent = '通信エラーが発生しました';
+  }
+}
+
+document.getElementById('add-staff-btn').addEventListener('click', () => {
+  const name = document.getElementById('new-staff-name').value.trim();
+  if (!name) { document.getElementById('new-staff-name').focus(); return; }
+  staffAction('add', { name });
+});
+
+document.getElementById('new-staff-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('add-staff-btn').click();
+});
 </script>
 </body>
 </html>
