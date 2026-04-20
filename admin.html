@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勤怠ログ確認</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+  background: #f0f4f8;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
+}
+
+h1 {
+  font-size: 1.4rem;
+  color: #2d3748;
+  margin-bottom: 28px;
+}
+
+/* ============ 認証画面 ============ */
+#screen-auth {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+#screen-auth h2 {
+  font-size: 1.1rem;
+  color: #2d3748;
+  margin-bottom: 20px;
+}
+
+#screen-auth input[type="password"] {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  outline: none;
+}
+#screen-auth input[type="password"]:focus {
+  border-color: #4299e1;
+}
+
+#auth-btn {
+  width: 100%;
+  padding: 13px;
+  background: #3182ce;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+#auth-btn:hover { background: #2b6cb0; }
+
+#auth-error {
+  color: #e53e3e;
+  font-size: 0.88rem;
+  margin-top: 10px;
+  display: none;
+}
+
+/* ============ ログ画面 ============ */
+#screen-log {
+  width: 100%;
+  max-width: 680px;
+  display: none;
+}
+
+/* タブ */
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 11px 0;
+  font-size: 1rem;
+  font-weight: bold;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-btn.active {
+  background: #3182ce;
+  border-color: #3182ce;
+  color: #fff;
+}
+
+/* 月選択 */
+#month-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+#month-selector label {
+  font-size: 0.9rem;
+  color: #718096;
+}
+#month-input {
+  padding: 8px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+}
+#month-input:focus { border-color: #4299e1; }
+
+#reload-btn {
+  padding: 8px 16px;
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #4a5568;
+}
+#reload-btn:hover { background: #f7fafc; }
+
+/* テーブル共通 */
+.log-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+th {
+  background: #edf2f7;
+  color: #4a5568;
+  font-weight: bold;
+  padding: 12px 14px;
+  text-align: left;
+  white-space: nowrap;
+}
+td {
+  padding: 12px 14px;
+  border-top: 1px solid #f0f4f8;
+  color: #2d3748;
+}
+tr:hover td { background: #f7fafc; }
+
+.type-in  { color: #2f855a; font-weight: bold; }
+.type-out { color: #c53030; font-weight: bold; }
+
+#log-message {
+  text-align: center;
+  color: #a0aec0;
+  padding: 32px 0;
+  font-size: 0.95rem;
+}
+
+/* ログアウト */
+#logout-btn {
+  margin-top: 20px;
+  background: none;
+  border: none;
+  color: #a0aec0;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Excelエクスポート */
+#export-btn {
+  padding: 9px 18px;
+  background: #276749;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#export-btn:hover { background: #22543d; }
+#export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<h1>勤怠ログ確認</h1>
+
+<!-- 認証画面 -->
+<div id="screen-auth">
+  <h2>🔒 管理者ログイン</h2>
+  <input type="password" id="pw-input" placeholder="パスワードを入力" />
+  <button id="auth-btn">ログイン</button>
+  <div id="auth-error">パスワードが違います</div>
+</div>
+
+<!-- ログ画面 -->
+<div id="screen-log">
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-today">当日ログ</button>
+    <button class="tab-btn"        id="tab-month">当月ログ</button>
+  </div>
+
+  <div id="month-selector" style="display:none">
+    <label>対象月：</label>
+    <input type="month" id="month-input" />
+    <button id="reload-btn">再読込</button>
+    <button id="export-btn" disabled>📥 Excel出力</button>
+  </div>
+
+  <div class="log-card">
+    <div id="log-message">読み込み中...</div>
+    <div id="log-table-wrap" style="display:none">
+      <table id="log-table">
+        <thead id="log-thead"></thead>
+        <tbody id="log-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <button id="logout-btn">ログアウト</button>
+</div>
+
+<script>
+// ============ パスワード設定 ============
+// ※ここを実際のパスワードに書き換えてください
+const ADMIN_PASSWORD = 'YOUR_PASSWORD';
+
+// ============ 認証 ============
+let currentMode = 'today';
+
+document.getElementById('auth-btn').addEventListener('click', tryLogin);
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryLogin();
+});
+
+function tryLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById('screen-auth').style.display = 'none';
+    document.getElementById('screen-log').style.display  = 'block';
+    initMonthInput();
+    loadLogs('today');
+  } else {
+    document.getElementById('auth-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+  document.getElementById('screen-auth').style.display = '';
+  document.getElementById('screen-log').style.display  = 'none';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('auth-error').style.display = 'none';
+});
+
+// ============ 月入力の初期値 ============
+function initMonthInput() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  document.getElementById('month-input').value = `${y}-${m}`;
+}
+
+// ============ タブ切り替え ============
+document.getElementById('tab-today').addEventListener('click', () => switchTab('today'));
+document.getElementById('tab-month').addEventListener('click', () => switchTab('month'));
+
+function switchTab(mode) {
+  currentMode = mode;
+  document.getElementById('tab-today').classList.toggle('active', mode === 'today');
+  document.getElementById('tab-month').classList.toggle('active', mode === 'month');
+  document.getElementById('month-selector').style.display = mode === 'month' ? 'flex' : 'none';
+  loadLogs(mode);
+}
+
+document.getElementById('reload-btn').addEventListener('click', () => loadLogs('month'));
+document.getElementById('export-btn').addEventListener('click', exportExcel);
+
+// ============ ログ取得 ============
+async function loadLogs(mode) {
+  showMessage('読み込み中...');
+
+  try {
+    let url = `get_logs.php?mode=${mode}`;
+    if (mode === 'month') {
+      const month = document.getElementById('month-input').value;
+      url += `&month=${month}`;
+    }
+
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+
+    if (mode === 'today') {
+      renderToday(data.logs, data.date);
+    } else {
+      renderMonth(data.logs, data.month);
+    }
+  } catch (e) {
+    showMessage('データの取得に失敗しました：' + e.message);
+  }
+}
+
+// ============ 当日ログ描画 ============
+function renderToday(logs, date) {
+  if (logs.length === 0) {
+    showMessage(`${date} の打刻記録はありません`);
+    return;
+  }
+
+  document.getElementById('log-thead').innerHTML = `
+    <tr><th>スタッフ</th><th>種別</th><th>時刻</th></tr>
+  `;
+
+  const tbody = document.getElementById('log-tbody');
+  tbody.innerHTML = '';
+  logs.forEach(r => {
+    const tr = document.createElement('tr');
+    const cls = r.type === '出勤' ? 'type-in' : 'type-out';
+    tr.innerHTML = `
+      <td>${r.name}</td>
+      <td class="${cls}">${r.type}</td>
+      <td>${r.stamped_at}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  showTable();
+}
+
+// ============ 当月ログ描画 ============
+let monthLogsCache = [];  // Excelエクスポート用に保持
+let monthCache = '';
+
+function renderMonth(logs, month) {
+  monthLogsCache = logs;
+  monthCache     = month;
+  document.getElementById('export-btn').disabled = (logs.length === 0);
+
+  if (logs.length === 0) {
+    showMessage(`${month} の打刻記録はありません`);
+    return;
+  }
+
+  document.getElementById('log-thead').innerHTML = `
+    <tr><th>スタッフ</th><th>日付</th><th>出勤</th><th>退勤</th><th>在籍時間</th></tr>
+  `;
+
+  const tbody = document.getElementById('log-tbody');
+  tbody.innerHTML = '';
+  logs.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.name}</td>
+      <td>${r.date}</td>
+      <td class="type-in">${r.in_time}</td>
+      <td class="type-out">${r.out_time}</td>
+      <td>${r.duration}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  showTable();
+}
+
+// ============ Excelエクスポート ============
+function exportExcel() {
+  if (monthLogsCache.length === 0) return;
+
+  const month = monthCache; // 例: "2026-03"
+  const [year, mon] = month.split('-');
+
+  // スタッフ一覧を取得（順序保持）
+  const staffList = [...new Set(monthLogsCache.map(r => r.name))];
+
+  // 日付一覧を取得
+  const dateList = [...new Set(monthLogsCache.map(r => r.date))].sort();
+
+  // 曜日ラベル
+  const dayNames = ['日','月','火','水','木','金','土'];
+
+  // ヘッダー行1: 日付 | スタッフ名（3列ずつ結合イメージ）
+  const header1 = ['日付'];
+  const header2 = [''];
+  staffList.forEach(name => {
+    header1.push(name, '', '');
+    header2.push('出勤', '退勤', '在籍時間');
+  });
+
+  // データ行
+  const dataRows = dateList.map(date => {
+    const d    = new Date(date);
+    const dow  = dayNames[d.getDay()];
+    const label = `${parseInt(mon)}/${parseInt(date.slice(8))}(${dow})`;
+    const row  = [label];
+    staffList.forEach(name => {
+      const rec = monthLogsCache.find(r => r.name === name && r.date === date);
+      row.push(rec ? rec.in_time  : '--');
+      row.push(rec ? rec.out_time : '--');
+      row.push(rec ? rec.duration : '--');
+    });
+    return row;
+  });
+
+  // シート作成
+  const wsData = [header1, header2, ...dataRows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // 列幅設定
+  const colWidths = [{ wch: 12 }];
+  staffList.forEach(() => {
+    colWidths.push({ wch: 8 }, { wch: 8 }, { wch: 10 });
+  });
+  ws['!cols'] = colWidths;
+
+  // スタッフごとにヘッダー行1をセル結合
+  const merges = [];
+  staffList.forEach((_, i) => {
+    const startCol = 1 + i * 3;
+    merges.push({ s: { r: 0, c: startCol }, e: { r: 0, c: startCol + 2 } });
+  });
+  ws['!merges'] = merges;
+
+  // ワークブック作成＆ダウンロード
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `${year}年${parseInt(mon)}月`);
+  XLSX.writeFile(wb, `勤怠_${year}${mon}.xlsx`);
+}
+
+
+function showMessage(msg) {
+  document.getElementById('log-message').textContent   = msg;
+  document.getElementById('log-message').style.display = 'block';
+  document.getElementById('log-table-wrap').style.display = 'none';
+}
+function showTable() {
+  document.getElementById('log-message').style.display    = 'none';
+  document.getElementById('log-table-wrap').style.display = 'block';
+}
+</script>
+</body>
+</html>
