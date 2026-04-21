@@ -1,0 +1,111 @@
+/* ============================================
+   admin.css — 管理者機能スタイル
+   ============================================ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+  background: #f0f4f8;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
+}
+
+h1 { font-size: 1.4rem; color: #2d3748; margin-bottom: 28px; }
+
+/* ============ 共通 ============ */
+.msg-placeholder { color: #a0aec0; text-align: center; padding: 16px 0; }
+.msg-success { display:block; padding:12px 16px; border-radius:8px; font-size:0.95rem; background:#c6f6d5; color:#276749; }
+.msg-error   { display:block; padding:12px 16px; border-radius:8px; font-size:0.95rem; background:#fed7d7; color:#9b2c2c; }
+
+/* ============ 認証画面 ============ */
+#screen-auth {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+#screen-auth h2 { font-size: 1.1rem; color: #2d3748; margin-bottom: 20px; }
+#screen-auth input[type="password"] {
+  width: 100%; padding: 12px 14px; font-size: 1rem;
+  border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 14px; outline: none;
+}
+#screen-auth input[type="password"]:focus { border-color: #4299e1; }
+#auth-btn {
+  width: 100%; padding: 13px; background: #3182ce; color: #fff;
+  font-size: 1rem; font-weight: bold; border: none; border-radius: 10px; cursor: pointer;
+}
+#auth-btn:hover { background: #2b6cb0; }
+#auth-error { color: #e53e3e; font-size: 0.88rem; margin-top: 10px; display: none; }
+
+/* ============ ログ画面 ============ */
+#screen-log { width: 100%; max-width: 680px; display: none; }
+
+.tab-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+.tab-btn {
+  flex: 1; padding: 11px 0; font-size: 1rem; font-weight: bold;
+  border: 2px solid #e2e8f0; border-radius: 10px;
+  background: #fff; color: #718096; cursor: pointer; transition: all 0.15s;
+}
+.tab-btn.active { background: #3182ce; border-color: #3182ce; color: #fff; }
+
+#month-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+#month-selector label { font-size: 0.9rem; color: #718096; }
+#month-input { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; outline: none; }
+#month-input:focus { border-color: #4299e1; }
+
+#reload-btn { padding: 8px 16px; background: #fff; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; cursor: pointer; color: #4a5568; }
+#reload-btn:hover { background: #f7fafc; }
+
+#export-btn { padding: 9px 18px; background: #276749; color: #fff; font-size: 0.9rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+#export-btn:hover { background: #22543d; }
+#export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.log-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+th { background: #edf2f7; color: #4a5568; font-weight: bold; padding: 12px 14px; text-align: left; white-space: nowrap; }
+td { padding: 12px 14px; border-top: 1px solid #f0f4f8; color: #2d3748; }
+tr:hover td { background: #f7fafc; }
+.type-in  { color: #2f855a; font-weight: bold; }
+.type-out { color: #c53030; font-weight: bold; }
+
+#log-message { text-align: center; color: #a0aec0; padding: 32px 0; font-size: 0.95rem; }
+#logout-btn { margin-top: 20px; background: none; border: none; color: #a0aec0; font-size: 0.85rem; cursor: pointer; text-decoration: underline; }
+
+/* ============ 打刻修正パネル ============ */
+.fix-search-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.fix-search-bar input[type="date"],
+.fix-search-bar select { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; outline: none; background: #fff; }
+.fix-search-bar select { min-width: 140px; }
+#fix-search-btn { padding: 8px 18px; background: #3182ce; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+.fix-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f4f8; flex-wrap: wrap; }
+.fix-type-label { font-weight: bold; min-width: 36px; }
+.fix-time-input { padding: 6px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; outline: none; }
+.fix-save-btn { padding: 6px 14px; background: #3182ce; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+.fix-del-btn  { padding: 6px 14px; background: #fff; color: #e53e3e; border: 1px solid #e53e3e; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+
+.fix-add-area { margin-top: 20px; }
+.fix-add-label { font-size: 0.9rem; color: #718096; margin-bottom: 10px; }
+.fix-add-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fix-add-bar select,
+.fix-add-bar input[type="time"] { padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; outline: none; background: #fff; }
+#fix-add-btn { padding: 8px 16px; background: #276749; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+#fix-msg { margin-top: 16px; }
+
+/* ============ スタッフ管理パネル ============ */
+.staff-add-bar { display: flex; gap: 10px; margin-bottom: 24px; }
+.staff-add-bar input[type="text"] { flex: 1; padding: 10px 14px; font-size: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; }
+#add-staff-btn { padding: 10px 20px; background: #3182ce; color: #fff; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; white-space: nowrap; }
+
+.staff-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f4f8; }
+.staff-row span { font-size: 1rem; color: #2d3748; }
+.staff-del-btn { padding: 6px 14px; background: #fff; color: #e53e3e; border: 1px solid #e53e3e; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+#staff-msg { margin-top: 16px; }

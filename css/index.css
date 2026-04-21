@@ -1,0 +1,121 @@
+/* ============================================
+   index.css — 勤怠打刻画面スタイル
+   ============================================ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+  background: #f0f4f8;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
+}
+
+h1 { font-size: 1.4rem; color: #2d3748; margin-bottom: 6px; }
+
+#clock {
+  font-size: 2.6rem;
+  font-weight: bold;
+  color: #2b6cb0;
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+
+#date { font-size: 1rem; color: #718096; margin-bottom: 24px; }
+
+/* ============ 画面切り替え ============ */
+.screen { display: none; width: 100%; max-width: 480px; }
+.screen.active { display: block; }
+
+/* ============ 画面1：スタッフ一覧 ============ */
+#screen-list h2 { font-size: 1rem; color: #718096; margin-bottom: 14px; }
+
+.msg-loading { color: #a0aec0; }
+
+.staff-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.staff-btn:active { transform: scale(0.98); }
+
+.staff-btn.status-none { background: #fff;     color: #2d3748; }
+.staff-btn.status-in   { background: #c6f6d5;  color: #22543d; }
+.staff-btn.status-out  { background: #e2e8f0;  color: #a0aec0; cursor: default; pointer-events: none; }
+
+.status-badge { font-size: 0.78rem; font-weight: normal; padding: 4px 10px; border-radius: 20px; }
+.status-none .status-badge { background: #e2e8f0; color: #718096; }
+.status-in   .status-badge { background: #9ae6b4; color: #22543d; }
+.status-out  .status-badge { background: #cbd5e0; color: #718096; }
+
+/* ============ 画面2：打刻 ============ */
+#screen-stamp {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 36px 28px;
+  text-align: center;
+}
+
+#back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #4a90e2;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-bottom: 24px;
+  padding: 0;
+}
+#back-btn:hover { text-decoration: underline; }
+
+#stamp-name       { font-size: 1.6rem; font-weight: bold; color: #2d3748; margin-bottom: 6px; }
+#stamp-status-msg { font-size: 0.9rem; color: #718096; margin-bottom: 32px; }
+
+.stamp-btn-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stamp-action-btn {
+  padding: 22px 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.stamp-action-btn:active:not(:disabled) { transform: scale(0.97); }
+.stamp-action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+#stamp-in-btn  { background: #3182ce; color: #fff; }
+#stamp-out-btn { background: #e53e3e; color: #fff; }
+
+#stamp-result {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 1rem;
+  display: none;
+}
+#stamp-result.success { background: #c6f6d5; color: #276749; }
+#stamp-result.error   { background: #fed7d7; color: #9b2c2c; }
+
+#loading { color: #a0aec0; font-size: 0.95rem; margin-top: 8px; display: none; }
